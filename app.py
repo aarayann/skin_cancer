@@ -57,8 +57,7 @@ if uploaded_file is not None:
     with col2:
         fig, ax = plt.subplots(figsize=(6, 6))
         ax.imshow(np.squeeze(img_array))
-        ax.set_title(f"Predicted: **{label}**
-Conf: **{conf}**", color=color, fontsize=14, fontweight='bold')
+        ax.set_title(f"Predicted: **{label}**\\nConf: **{conf}**", color=color, fontsize=14, fontweight='bold')
         ax.axis('off')
         st.pyplot(fig)
 else:
