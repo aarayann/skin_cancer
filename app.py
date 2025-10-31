@@ -1,4 +1,4 @@
-# Skin Cancer App
+# Skin Cancer App (Fixed Load for TF 2.20)
 
 import streamlit as st
 import tensorflow as tf
@@ -10,10 +10,11 @@ import matplotlib.pyplot as plt
 @st.cache_data
 def load_deploy_model():
     try:
-        model = load_model('deploy_model.keras', compile=False)  # Frozen, no training state
+        # Load with compile=True (builds graph for BN/Dense, fixes input mismatch in TF 2.20)
+        model = load_model('deploy_model.keras', compile=True)  # Dummy compile (binary for shape, no train)
         return model
     except Exception as e:
-        st.error(f"Load error: {e}. Check file.")
+        st.error(f"Load error: {e}. Check file/path (TF version mismatch?).")
         return None
 
 @st.cache_data
@@ -21,7 +22,7 @@ def preprocess_image(image):
     img = image.resize((224, 224))
     img_array = np.array(img)
     img_array = np.expand_dims(img_array, axis=0)
-    img_array = tf.cast(img_array, tf.float32) / 255.0  # [0,1] normalize
+    img_array = tf.cast(img_array, tf.float32) / 255.0  # [0,1] normalize (matches training)
     return img_array
 
 # Load model once
