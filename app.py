@@ -68,7 +68,7 @@ if uploaded_file is not None:
     conf = f"{pred*100:.1f}%" if pred > 0.5 else f"{(1-pred)*100:.1f}%"
     color = "red" if pred > 0.5 else "green"
     
-    st.success(f"Result: **{label}** (Conf: **{conf}**) – Model robust, no missed cancers likely.")
+    st.success(f"Result: **{label}** (Conf: **{conf}**).")
 
     col1, col2 = st.columns(2)
     with col1:
@@ -83,4 +83,4 @@ if uploaded_file is not None:
 else:
     st.info("Upload to predict.")
 
-st.write("App: Cached speed, error-free, simple UI (no advanced visuals).")
+st.write("Made by BUCK ❤️")
