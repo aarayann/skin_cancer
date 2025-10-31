@@ -1,8 +1,10 @@
-# Skin Cancer App (Fixed Load for TF 2.20)
+# Skin Cancer App (Fixed: Weights-Only Load for TF Version Stability)
 
 import streamlit as st
 import tensorflow as tf
-from tensorflow.keras.models import load_model
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, BatchNormalization, Dropout
+from tensorflow.keras.applications import EfficientNetB0
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,11 +12,24 @@ import matplotlib.pyplot as plt
 @st.cache_data
 def load_deploy_model():
     try:
-        # Load with compile=True (builds graph for BN/Dense, fixes input mismatch in TF 2.20)
-        model = load_model('deploy_model.keras', compile=True)  # Dummy compile (binary for shape, no train)
+        # Rebuild exact Sequential (standard, no custom – avoids .keras graph bug)
+        base = EfficientNetB0(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+        base.trainable = False  # Frozen base
+        model = Sequential([
+            base,
+            GlobalAveragePooling2D(),
+            Dense(128, activation='relu'),
+            BatchNormalization(),
+            Dropout(0.6),
+            Dense(1, activation='sigmoid')
+        ])
+        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])  # For shape
+        
+        # Load weights (stable across TF 2.15 save / 2.20 load)
+        model.load_weights('deploy_weights.weights.h5')
         return model
     except Exception as e:
-        st.error(f"Load error: {e}. Check file/path (TF version mismatch?).")
+        st.error(f"Load error: {e}. Ensure 'deploy_weights.weights.h5' in root (or use rebuild only).")
         return None
 
 @st.cache_data
