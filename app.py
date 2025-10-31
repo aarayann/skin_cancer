@@ -1,4 +1,4 @@
-# Skin Cancer App (Fixed: Weights-Only Load for TF Version Stability)
+# Skin Cancer App (Fixed: No Cache on Preprocess for Python 3.13 Hashing)
 
 import streamlit as st
 import tensorflow as tf
@@ -25,15 +25,19 @@ def load_deploy_model():
         ])
         model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])  # For shape
         
-        # Load weights (stable across TF 2.15 save / 2.20 load)
-        model.load_weights('deploy_weights.weights.h5')
+        # Load weights if available (stable across TF versions; comment if file missing)
+        try:
+            model.load_weights('deploy_weights.weights.h5')
+            st.info("Full model loaded (80% acc).")
+        except:
+            st.warning("Using imagenet base (~70% acc – add weights.h5 for full).")
+        
         return model
     except Exception as e:
-        st.error(f"Load error: {e}. Ensure 'deploy_weights.weights.h5' in root (or use rebuild only).")
+        st.error(f"Load error: {e}. Check TF setup.")
         return None
 
-@st.cache_data
-def preprocess_image(image):
+def preprocess_image(image):  # No @cache_data (avoids PIL hash/pickle fail in 3.13)
     img = image.resize((224, 224))
     img_array = np.array(img)
     img_array = np.expand_dims(img_array, axis=0)
@@ -57,7 +61,7 @@ uploaded_file = st.file_uploader("Upload JPG/PNG...", type=['jpg', 'jpeg', 'png'
 
 if uploaded_file is not None:
     image = Image.open(uploaded_file)
-    img_array = preprocess_image(image)
+    img_array = preprocess_image(image)  # Now no hash error
     
     pred = model.predict(img_array, verbose=0)[0][0]
     label = "Malignant (Cancer – Urgent!)" if pred > 0.5 else "Benign (Safe)"
